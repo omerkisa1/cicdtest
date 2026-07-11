@@ -46,3 +46,20 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/cicd-demo:latest
             ${{ secrets.DOCKER_USERNAME }}/cicd-demo:${{ github.sha }}
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/cicd-demo:latest
+            docker stop cicd-app || true
+            docker rm cicd-app || true
+            docker run -d --name cicd-app -p 80:8000 ${{ secrets.DOCKER_USERNAME }}/cicd-demo:latest
+            echo "Deploy tamamlandi: $(date)"
