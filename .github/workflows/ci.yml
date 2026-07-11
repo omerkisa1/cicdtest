@@ -23,3 +23,17 @@ jobs:
 
       - name: Run tests
         run: PYTHONPATH=. pytest tests/ -v
+
+  build:
+   needs: test
+   runs-on: ubuntu-latest
+   if: github.event_name == 'push'
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v4
+
+     - name: Build Docker image
+       run: docker build -t cicd-demo:${{ github.sha }} .
+
+     - name: Verify image
+       run: docker images cicd-demo
